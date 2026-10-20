@@ -6,22 +6,20 @@ on:
 
 jobs:
   checks:
-    runs-on: self-hosted
+    # GitHub-hosted: free for a public repository, and outside pull requests never run on our own machine.
+    # The org's self-hosted runner group does not accept public repositories.
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          clean: false   # keep lean/.lake between runs so Mathlib is not re-downloaded
       - name: Numerical checks
         run: |
-          python3 -c "import numpy, scipy" 2>/dev/null || python3 -m pip install --user numpy scipy
+          python3 -m pip install --quiet numpy scipy
           python3 checks/check_bounds.py | tee /tmp/check_bounds.out
           grep -q "ALL CHECKS PASS" /tmp/check_bounds.out
       - name: Lean toolchain
         run: |
-          if [ ! -x "$HOME/.elan/bin/lake" ]; then
-            curl -sSfL https://github.com/leanprover/elan/releases/latest/download/elan-init.sh -o /tmp/elan-init.sh
-            sh /tmp/elan-init.sh -y --default-toolchain none
-          fi
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -o /tmp/elan-init.sh
+          sh /tmp/elan-init.sh -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
       - name: Lean build (no sorry)
         working-directory: lean

@@ -28,7 +28,7 @@ score against it.
 | `lean/SensorExperiment.lean` | Lean 4 + Mathlib. Part A: the counting form of the theorems, machine-checked. Part B: the experiment's hypotheses as exact yes/no checks on the log |
 | `EXPERIMENT.md` | Pre-registered protocol, full form, for a lab with the compute to run it: do two models stay out of a loop when a sensor feeds them real information? |
 | `lean/Axioms.lean` | Prints the axioms each Lean theorem depends on |
-| `.github/workflows/check.yml` | Runs the checks, the Lean build and the axiom check on every push and pull request |
+| `.github/workflows/check.yml` | Runs the checks, the Lean build and the axiom check on every push and pull request (GitHub-hosted runner) |
 
 ## Checking it
 
