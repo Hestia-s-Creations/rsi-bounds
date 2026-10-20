@@ -1,7 +1,10 @@
 # Bounds on recursive self-improvement
 
-Started 2026-10-19 from handwritten notes ("prove AI circular self-improvement requires a rate of
-forgetting and outside input"). Checks: `python3 checks/check_bounds.py` (all pass, 2026-10-19).
+Started 2026-10-19 from "the notebook": three pages of handwritten notes by Nicole Welch and Tim of
+Hestia's Creations, written before any of this, that set out to prove that true AI recursive
+self-improvement requires both a rate of forgetting and outside input. The notebook is not in this
+repository. Where the text below mentions the notebook's notation (M_T, F_T) or the notebook's goal, it
+means those pages. Checks: `python3 checks/check_bounds.py` (all pass, 2026-10-19).
 
 ## Verdict
 
@@ -78,14 +81,18 @@ input rate of b bits per step:
   t ≥ ( H(W) − 1 − ε·log₂|𝒲| − I₀ ) / b.
 
 Worked number: take a million independent yes/no facts about something unexplored (H = log₂|𝒲| = 10⁶ bits) and a
-target error of 1%. The system needs 989,999 bits. At 1,000 bits per day of experimental results, starting from
-zero, that takes **at least 990 days**. No level of intelligence shortens this. Only more or better experiments
-(a larger b) do. An "explosion" in world knowledge therefore needs an explosion in the input rate.
+target error of 1%. "Error" here is P(Ŵ ≠ W), the chance that the guess of the whole million-bit vector is wrong
+anywhere. The system needs 989,999 bits. At 1,000 bits per day of experimental results, starting from zero, that
+takes **at least 990 days**. If "1% error" instead means 1% of the facts wrong, the rate-distortion converse for
+uniform bits gives I(W; S_t) ≥ 10⁶·(1 − h(0.01)) ≈ 919,000 bits, so at least 919 days: the same picture. No level
+of intelligence shortens this. Only more or better experiments (a larger b) do. An "explosion" in world knowledge
+therefore needs an explosion in the input rate.
 
 ### Theorem 3 (closed systems stop improving)
 If Φ is deterministic and the system is closed after T₀, the run S_{T₀}, S_{T₀+1}, … becomes periodic within 2^B
 steps. A run of strictly increasing U lasts at most 2^B − 1 steps, and strict improvement can't continue forever.
-(With randomness, the total of all improvements is still at most max U − U(S_{T₀}).)
+(With randomness, the net improvement U(S_t) − U(S_{T₀}) is still at most max U − U(S_{T₀}), which needs no theorem.
+The sum of all rises is not bounded, because U can rise and fall forever.)
 
 *Proof.* There are at most 2^B states, and each state determines the next, so a state repeats within 2^B steps
 (pigeonhole) and the run cycles from then on. A strictly increasing U can't revisit a state, so it can't go around
@@ -116,12 +123,19 @@ Gerstgrasser et al. (2024) find that dropping the original real data causes coll
 collapse. Forget detail and outdated material; keep the grounding.
 
 ### Theorem 5 (two minds)
-For two systems A and B with budgets b^A and b^B that exchange messages freely:
+For two systems A and B that exchange messages freely, with budgets in the alphabet-size form (X^A_t takes at most
+2^{b^A_t} values and X^B_t at most 2^{b^B_t} values):
 I(W; S^A_t, S^B_t) ≤ I(W; S^A_0, S^B_0) + Σ (b^A_s + b^B_s).
 Messages between them add nothing to what the pair knows jointly. Either one alone can exceed its own budget by
 learning from the other. (In the check, B has b^B = 0 and still learns 2 bits.)
 
-*Proof.* Apply Theorem 1 to the joint state (S^A, S^B). Its inputs are (X^A, X^B), and messages are internal. ∎
+*Proof.* Apply Theorem 1 to the joint state (S^A, S^B). Its input is the pair (X^A, X^B), which takes at most
+2^{b^A + b^B} values, so the joint budget is b^A + b^B. Messages are internal. ∎
+
+The alphabet-size form matters here. The two mutual-information budgets I(W; X^A | S^A) ≤ b^A and
+I(W; X^B | S^B) ≤ b^B on their own do not bound the joint term I(W; X^A, X^B | S^A, S^B). Example: Z is a fair bit
+independent of W, mind B holds Z, and mind A receives W ⊕ Z. Each budget is 0, yet the pair learns W. The check
+script uses alphabet-size budgets.
 
 This sharpens the notebook's paragraph. "More than the sum of its parts" holds for *skill*: the joint system can
 reach computations neither could reach alone. It does not hold for *knowledge* of the world, which is capped by
@@ -206,12 +220,15 @@ computed for it.
   https://www.forethought.org/research/will-ai-r-and-d-automation-cause-a-software-intelligence-explosion
 - Forethought, "How quick and big would a software intelligence explosion be?" (2025).
   https://www.forethought.org/research/how-quick-and-big-would-a-software-intelligence-explosion-be
-- Zenil, "On the Limits of Self-Improving in LLMs" (2026): collapse when outside signal vanishes. https://arxiv.org/abs/2601.05280
+- Zenil, Uthamacumaran & Ozelim, "Large Language Models are Shannon Lossy Compressors Not Solomonoff Induction
+  Estimators: Self-improvement and Singularity Are Not Near Without Symbolic Model Synthesis" (2026; version 1 was
+  titled "On the Limits of Self-Improving in LLMs…"): collapse when outside signal vanishes. https://arxiv.org/abs/2601.05280
 - Huang et al., "Self-Improvement in Language Models: The Sharpening Mechanism" (ICLR 2025). https://arxiv.org/abs/2412.01951
 - Gerstgrasser et al., "Is Model Collapse Inevitable?" (2024). https://arxiv.org/abs/2404.01413
 - Richards & Frankland, "The Persistence and Transience of Memory," Neuron 2017.
-- Standard results, not re-checked this session: Fano's inequality and data processing (Cover & Thomas, *Elements of
-  Information Theory*); the halting problem; PSPACE-completeness of LBA acceptance (Sipser).
+- Standard results, not re-checked this session: Fano's inequality, data processing, and the rate-distortion
+  function R(D) = 1 − h(D) of a fair bit under Hamming distortion (Cover & Thomas, *Elements of Information Theory*);
+  the halting problem; PSPACE-completeness of LBA acceptance (Sipser).
 
 ---
 

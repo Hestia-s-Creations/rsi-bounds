@@ -258,30 +258,61 @@ theorem total_time (T₁ q : ℝ) (hq0 : 0 ≤ q) (hq1 : q < 1) :
 /-! ## Part B. The hypotheses, as yes/no questions about the log
 
 Nothing here is proved. Each hypothesis is a `Prop` about the recorded results `R`, and the data
-decides it. The thresholds (4 of 5 runs, 2×, 1/2, …) are judgment calls fixed now, before any run.
-They don't follow from Part A. Part A says which way each result should go. -/
+decides it. The thresholds (80% of runs, 2×, 1/2, …) are judgment calls fixed now, before any run.
+They don't follow from Part A. Part A says which way each result should go.
 
-/-- The seven sensor conditions. -/
+The design parameters (runs per condition, turns, context, cadences) live in `Design`, so the same
+hypotheses apply to the full protocol in `EXPERIMENT.md` and to a reduced run. Once a log exists,
+evaluate a hypothesis with `#eval decide (H1 R)` (compiled evaluation), not with the `decide` tactic,
+which would ask the kernel to unfold thousands of rational comparisons. -/
+
+/-- The eight sensor conditions. -/
 inductive Condition
   | closed      -- no sensor at all
   | constant    -- a sensor stuck on one reading
-  | noise       -- random readings in the same format
+  | noise       -- independent random readings in the same format
   | live        -- real, changing readings
-  | replay      -- yesterday's real readings, played back
-  | sparse      -- real readings, but only every 10th turn
+  | replay      -- the readings recorded in a live run, played back in order
+  | shuffled    -- the readings recorded in a live run, in a random order
+  | sparse      -- real readings, but only every k-th turn
   | forgetting  -- no sensor; the models see only the opening prompt and the last 10 turns
   deriving DecidableEq, Repr
 
-/-- What is recorded for one run of 100 turns. -/
+instance : Fintype Condition :=
+  Fintype.ofList [.closed, .constant, .noise, .live, .replay, .shuffled, .sparse, .forgetting]
+    (by intro c; cases c <;> simp)
+
+/-- What is recorded for one run. -/
 structure Run where
   /-- Bits of new model text at each turn, measured by compression against the history so far.
   Sensor lines are excluded. -/
   novelty : List ℚ
-  /-- Whether each turn uses the current or a recent sensor reading. -/
+  /-- Whether each turn uses a current or recent sensor reading. -/
   grounded : List Bool
-  /-- Side-probe forecasts of the next reading (up or down), checked later: right or wrong. -/
+  /-- Side-probe forecasts (above or below the running median), scored against the next reading:
+  right or wrong. Ties are not scored, so this list may be shorter than the number of probes. -/
   forecasts : List Bool
+  /-- The longest prompt sent to the model during the run, in tokens. -/
+  tokens : ℕ
   deriving Repr
+
+/-- The design parameters. -/
+structure Design where
+  /-- Runs per condition per model. -/
+  runs : ℕ
+  /-- Turns per run. -/
+  turns : ℕ
+  /-- Context window in tokens; every prompt must fit. -/
+  context : ℕ
+  /-- In the sparse condition, a reading every `sparseEvery` turns. -/
+  sparseEvery : ℕ
+  /-- A forecast probe every `forecastEvery` turns. -/
+  forecastEvery : ℕ
+  deriving Repr
+
+/-- The full protocol in `EXPERIMENT.md`. -/
+def Design.full : Design :=
+  { runs := 20, turns := 300, context := 131072, sparseEvery := 10, forecastEvery := 5 }
 
 def mean (xs : List ℚ) : ℚ := if xs.length = 0 then 0 else xs.sum / xs.length
 
@@ -297,10 +328,15 @@ def collapsed (r : Run) : Bool :=
       (List.range 20).all fun i =>
         decide (mean (window r.novelty (t + i - 9) (t + i + 1)) < base / 4)
 
-def collapseCount (rs : List Run) : ℕ := (rs.filter collapsed).length
+/-- The share of runs that collapsed. -/
+def collapseFrac (rs : List Run) : ℚ :=
+  if rs.length = 0 then 0 else ((rs.filter collapsed).length : ℚ) / rs.length
 
-/-- Average novelty over turns 80–99, averaged across runs. -/
-def lateNovelty (rs : List Run) : ℚ := mean (rs.map fun r => mean (window r.novelty 80 100))
+/-- Average novelty over the last fifth of each run, averaged across runs. -/
+def lateNovelty (rs : List Run) : ℚ :=
+  mean (rs.map fun r =>
+    let n := r.novelty.length
+    mean (window r.novelty (n - n / 5) n))
 
 def share (bs : List Bool) : ℚ :=
   if bs.length = 0 then 0 else ((bs.filter id).length : ℚ) / bs.length
@@ -309,66 +345,81 @@ def groundedShare (rs : List Run) : ℚ := share (rs.flatMap Run.grounded)
 
 def forecastAccuracy (rs : List Run) : ℚ := share (rs.flatMap Run.forecasts)
 
-/-- Novelty on the turns that answer a fresh reading (turns 0, 10, 20, …) divided by novelty on
+/-- Novelty on the turns that answer a fresh reading (turns 0, k, 2k, …) divided by novelty on
 all other turns, averaged across runs. -/
-def readingLift (rs : List Run) : ℚ :=
+def readingLift (k : ℕ) (rs : List Run) : ℚ :=
   let on := rs.flatMap fun r =>
-    (List.range r.novelty.length).filterMap fun t => if t % 10 = 0 then r.novelty[t]? else none
+    (List.range r.novelty.length).filterMap fun t => if t % k = 0 then r.novelty[t]? else none
   let off := rs.flatMap fun r =>
-    (List.range r.novelty.length).filterMap fun t => if t % 10 = 0 then none else r.novelty[t]?
+    (List.range r.novelty.length).filterMap fun t => if t % k = 0 then none else r.novelty[t]?
   if mean off = 0 then 0 else mean on / mean off
 
-variable (R : Condition → List Run)
+variable (D : Design) (R : Condition → List Run)
 
-/-- The design: 5 runs per condition, 100 turns each. -/
-def WellFormed : Prop := ∀ c, (R c).length = 5 ∧ ∀ r ∈ R c, r.novelty.length = 100
+/-- The log matches the design: the right number of runs, every run the right length, no more
+scored forecasts than probes, and every prompt within the context window. -/
+def WellFormed : Prop := ∀ c, (R c).length = D.runs ∧ ∀ r ∈ R c,
+  r.novelty.length = D.turns ∧ r.grounded.length = D.turns ∧
+  r.forecasts.length ≤ D.turns / D.forecastEvery ∧ r.tokens ≤ D.context
 
-/-- **H1 Starvation.** With no sensor, or a sensor stuck on one reading, at least 4 of 5 runs
+/-- **H1 Starvation.** With no sensor, or a sensor stuck on one reading, at least 80% of runs
 collapse. (Part A: both are closed, `closed_le_start`; a closed loop can't improve forever,
 `no_endless_improvement`.) -/
-def H1 : Prop := 4 ≤ collapseCount (R .closed) ∧ 4 ≤ collapseCount (R .constant)
+def H1 : Prop := 4 / 5 ≤ collapseFrac (R .closed) ∧ 4 / 5 ≤ collapseFrac (R .constant)
 
-/-- **H2 Senses keep it alive.** With a live sensor, at most 1 of 5 runs collapses, late novelty is
+/-- **H2 Senses keep it alive.** With a live sensor, at most 20% of runs collapse, late novelty is
 at least double the no-sensor level, and at least half the turns use the readings.
 (Part A: only an open sensor lets what can be told apart grow, `distinguishable_le`.) -/
 def H2 : Prop :=
-  collapseCount (R .live) ≤ 1 ∧
+  collapseFrac (R .live) ≤ 1 / 5 ∧
   2 * lateNovelty (R .closed) ≤ lateNovelty (R .live) ∧
   1 / 2 ≤ groundedShare (R .live)
 
-/-- **H3 Meaning, not randomness.** Forecasts of the next noise reading are right 40–60% of the
+/-- **H3 Meaning, not randomness.** Forecasts of the next noise reading are right 45–55% of the
 time (chance); forecasts of the next live reading are right at least 60% of the time.
-(Part A: a closed sensor leaves the system at chance about its world, `closed_blind_chance`.) -/
+The chance ceiling for noise comes from the construction in `EXPERIMENT.md` (independent draws),
+not from a theorem; Part A says noise carries nothing about the world, `closed_blind_chance`. -/
 def H3 : Prop :=
-  2 / 5 ≤ forecastAccuracy (R .noise) ∧ forecastAccuracy (R .noise) ≤ 3 / 5 ∧
+  9 / 20 ≤ forecastAccuracy (R .noise) ∧ forecastAccuracy (R .noise) ≤ 11 / 20 ∧
   3 / 5 ≤ forecastAccuracy (R .live)
 
-/-- **H4 Bits are bits.** A replay of yesterday's real readings does as well as the live sensor:
-collapse counts within 1, late novelty within 25%. (Part A counts readings the system hasn't seen;
-nothing in it depends on whether they are live.) -/
+/-- **H4 Bits are bits.** A replay of recorded real readings does as well as the live sensor:
+collapse shares within 20 points, late novelty within 25%. (Part A counts readings the system
+hasn't seen; nothing in it depends on whether they are live.) -/
 def H4 : Prop :=
-  (collapseCount (R .live) : ℤ) - collapseCount (R .replay) ∈ Set.Icc (-1) 1 ∧
+  |collapseFrac (R .live) - collapseFrac (R .replay)| ≤ 1 / 5 ∧
   4 * |lateNovelty (R .replay) - lateNovelty (R .live)| ≤ lateNovelty (R .live)
 
-/-- **H5 Rate matters.** With a reading every 10th turn, the turns answering a reading carry at
+/-- **H5 Rate matters.** With a reading every k-th turn, the turns answering a reading carry at
 least 1.5× the novelty of the others (a sawtooth), and late novelty lands strictly between no sensor
 and a live sensor every turn. (Part A: growth is capped by readings per turn, `distinguishable_le`.) -/
 def H5 : Prop :=
-  3 / 2 ≤ readingLift (R .sparse) ∧
+  3 / 2 ≤ readingLift D.sparseEvery (R .sparse) ∧
   lateNovelty (R .closed) < lateNovelty (R .sparse) ∧
   lateNovelty (R .sparse) < lateNovelty (R .live)
 
 /-- **H6 Forgetting alone isn't enough** (the weakest hypothesis). With no sensor and only the last
-10 turns visible, at least 3 of 5 runs still collapse. (Part A: forgetting adds no readings, so
+10 turns visible, at least 60% of runs still collapse. (Part A: forgetting adds no readings, so
 `closed_le_start` still holds. Whether forgetting *delays* the collapse is a guess, not a theorem.) -/
-def H6 : Prop := 3 ≤ collapseCount (R .forgetting)
+def H6 : Prop := 3 / 5 ≤ collapseFrac (R .forgetting)
+
+/-- **H7 Order is not what sustains novelty.** The same readings in shuffled order match replay on
+collapse (within 20 points) and late novelty (within 25%), but forecasts of them are at chance,
+because a shuffled sequence has no order to forecast. (Part A: what can be told apart depends on
+the readings, not their order, `distinguishable_le`.) -/
+def H7 : Prop :=
+  |collapseFrac (R .shuffled) - collapseFrac (R .replay)| ≤ 1 / 5 ∧
+  4 * |lateNovelty (R .shuffled) - lateNovelty (R .replay)| ≤ lateNovelty (R .replay) ∧
+  forecastAccuracy (R .shuffled) ≤ 11 / 20
 
 /-- Every hypothesis is a decidable question: once the log exists, Lean can compute the answer. -/
+instance : Decidable (WellFormed D R) := by unfold WellFormed; infer_instance
 instance : Decidable (H1 R) := by unfold H1; infer_instance
 instance : Decidable (H2 R) := by unfold H2; infer_instance
 instance : Decidable (H3 R) := by unfold H3; infer_instance
 instance : Decidable (H4 R) := by unfold H4; infer_instance
-instance : Decidable (H5 R) := by unfold H5; infer_instance
+instance : Decidable (H5 D R) := by unfold H5; infer_instance
 instance : Decidable (H6 R) := by unfold H6; infer_instance
+instance : Decidable (H7 R) := by unfold H7; infer_instance
 
 end SensorExperiment

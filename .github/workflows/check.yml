@@ -1,0 +1,37 @@
+name: check
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false   # keep lean/.lake between runs so Mathlib is not re-downloaded
+      - name: Numerical checks
+        run: |
+          python3 -c "import numpy, scipy" 2>/dev/null || python3 -m pip install --user numpy scipy
+          python3 checks/check_bounds.py | tee /tmp/check_bounds.out
+          grep -q "ALL CHECKS PASS" /tmp/check_bounds.out
+      - name: Lean toolchain
+        run: |
+          if [ ! -x "$HOME/.elan/bin/lake" ]; then
+            curl -sSfL https://github.com/leanprover/elan/releases/latest/download/elan-init.sh -o /tmp/elan-init.sh
+            sh /tmp/elan-init.sh -y --default-toolchain none
+          fi
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Lean build (no sorry)
+        working-directory: lean
+        run: |
+          ! grep -n "sorry" SensorExperiment.lean
+          lake exe cache get
+          lake build
+      - name: Lean axioms are the standard three
+        working-directory: lean
+        run: |
+          lake env lean Axioms.lean | tee /tmp/axioms.out
+          test "$(grep -c "depends on axioms" /tmp/axioms.out)" -eq 20
+          ! grep "depends on axioms" /tmp/axioms.out | grep -v "\[propext, Classical.choice, Quot.sound\]"

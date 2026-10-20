@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "Bounds on recursive self-improvement"
+type: software
+authors:
+  - name: "Hestia's Creations"
+repository-code: "https://github.com/Hestia-s-Creations/rsi-bounds"
+date-released: 2026-10-20
+version: 0.2.0
+license: "GPL-3.0-or-later"
+abstract: >-
+  Information-theoretic bounds on recursive self-improvement (knowledge grows by at most the
+  input bits and never past memory; sustained learning forces forgetting at the same rate; two
+  minds know no more than their combined inputs), a conditional growth law for compute-only
+  skill, an undecidability result for general prediction, numerical checks, Lean 4 proofs of
+  the counting forms, and a pre-registered sensor experiment protocol.
