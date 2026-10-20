@@ -4,7 +4,8 @@ What can be proved about how fast a self-improving AI gets better, and an experi
 
 It started from three pages of handwritten notes by Nicole Welch and Timothy Miller Allen of Hestia's Creations, which set out to
 prove that true AI recursive self-improvement requires both a rate of forgetting and outside input. The theorems
-below are what survived when that claim was made precise. `THEOREM.md` keeps score against the notes.
+below are what survived when that claim was made precise. `NOTEBOOK.md` is the transcription; `THEOREM.md` keeps
+score against it.
 
 **Result in one line:** a system can out-think its inputs, but it can't out-know them.
 
@@ -21,6 +22,7 @@ below are what survived when that claim was made precise. `THEOREM.md` keeps sco
 
 | Path | What it is |
 |---|---|
+| `NOTEBOOK.md` | Transcription of the three handwritten pages the work started from |
 | `THEOREM.md` | Seven theorems with proofs (information-theoretic form), worked numbers and sources |
 | `checks/check_bounds.py` | Exact numerical checks of every inequality on hundreds of small random systems |
 | `lean/SensorExperiment.lean` | Lean 4 + Mathlib. Part A: the counting form of the theorems, machine-checked. Part B: the experiment's hypotheses as exact yes/no checks on the log |
@@ -55,4 +57,4 @@ Copyright © 2026 Hestia's Creations.
 | What | License | Text |
 |---|---|---|
 | Code: `checks/`, `lean/` | GNU General Public License v3.0 or later | `LICENSE` |
-| Writing: `README.md`, `THEOREM.md`, `EXPERIMENT.md`, `CITATION.cff` | Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) | `LICENSE-docs` |
+| Writing: `README.md`, `NOTEBOOK.md`, `THEOREM.md`, `EXPERIMENT.md`, `CITATION.cff` | Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) | `LICENSE-docs` |
