@@ -116,7 +116,6 @@ def check_pigeonhole(trials=2000):
                 F[order[i]] = order[i + 1]
         for s0 in range(nS):
             s, run, best = s0, 0, 0
-            seen_increase_after_cycle = True
             for t in range(4 * nS):
                 s2 = F[s]
                 if U[s2] > U[s]:
@@ -127,7 +126,6 @@ def check_pigeonhole(trials=2000):
                 s = s2
             # after 4*2^B steps we are on the cycle; one more lap must contain a non-increase
             lap_increasing = True
-            start = s
             for _ in range(nS + 1):
                 s2 = F[s]
                 if not U[s2] > U[s]:
