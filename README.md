@@ -39,4 +39,4 @@ They were checked with Lean v4.35.0-rc4 and Mathlib v4.35.0-rc4.
 
 The theorems and checks are complete. The experiment is designed but has not been run.
 
-© 2026 Hestia's Creations. All rights reserved.
+Copyright © 2026 Hestia's Creations. Licensed under the GNU General Public License v3.0 or later; see `LICENSE`.
