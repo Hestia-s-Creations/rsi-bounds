@@ -57,4 +57,4 @@ Copyright © 2026 Hestia's Creations.
 | What | License | Text |
 |---|---|---|
 | Code: `checks/`, `lean/` | GNU General Public License v3.0 or later | `LICENSE` |
-| Writing: `README.md`, `NOTEBOOK.md`, `THEOREM.md`, `EXPERIMENT.md`, `CITATION.cff` | Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) | `LICENSE-docs` |
+| Writing: `README.md`, `NOTEBOOK.md`, `notebook/` (page photographs), `THEOREM.md`, `EXPERIMENT.md`, `CITATION.cff` | Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) | `LICENSE-docs` |

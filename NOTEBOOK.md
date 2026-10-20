@@ -4,10 +4,14 @@ Three handwritten pages by Nicole Welch and Timothy Miller Allen, written before
 repository. They are the starting point that `THEOREM.md` keeps score against. This is a transcription of
 the pages as written, including a crossed-out assumption, with the notation unchanged.
 
+The photographs of the pages are in `notebook/`: `page-1.jpg`, `page-2.jpg`, `page-3.jpg`.
+
 Markers: `[crossed out]` for text struck through on the page, `[unclear]` where the handwriting could not be
 read with confidence, `[margin]` for notes written in the margin.
 
 ## Page 1
+
+![Page 1](notebook/page-1.jpg)
 
 **Goal:** prove AI circular self-improvement requires a rate of forgetting **and** outside input.
 
@@ -41,6 +45,8 @@ The information item I already exists inside the system's memory.
 
 ## Page 2
 
+![Page 2](notebook/page-2.jpg)
+
 F_T : S_T × M_T → S_{T+1}
 
 The update function takes the current system and some memory content, then produces the next system state.
@@ -64,6 +70,8 @@ The system self-improves at time T if there exists some information already insi
 using that information to update itself produces a better system state.
 
 ## Page 3
+
+![Page 3](notebook/page-3.jpg)
 
 Closed(S, T₀) ⟺
 
