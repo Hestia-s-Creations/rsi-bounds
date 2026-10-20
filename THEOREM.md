@@ -212,3 +212,7 @@ computed for it.
 - Richards & Frankland, "The Persistence and Transience of Memory," Neuron 2017.
 - Standard results, not re-checked this session: Fano's inequality and data processing (Cover & Thomas, *Elements of
   Information Theory*); the halting problem; PSPACE-completeness of LBA acceptance (Sipser).
+
+---
+
+Copyright © 2026 Hestia's Creations. This document is licensed under CC BY-SA 4.0; see `LICENSE-docs`.

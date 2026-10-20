@@ -82,3 +82,7 @@ Every reading uses one format, so only the information changes:
 5. Small-scale evidence for the main result: a system can out-think its inputs but can't out-know them.
 6. Nothing about consciousness. It shows the same pattern as sensory deprivation in people: cut off from its
    senses, a mind drifts into its own echoes.
+
+---
+
+Copyright © 2026 Hestia's Creations. This document is licensed under CC BY-SA 4.0; see `LICENSE-docs`.
