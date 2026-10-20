@@ -1,7 +1,7 @@
 # Bounds on recursive self-improvement
 
-Started 2026-10-19 from "the notebook": three pages of handwritten notes by Nicole Welch and Tim of
-Hestia's Creations, written before any of this, that set out to prove that true AI recursive
+Started 2026-10-19 from "the notebook": three pages of handwritten notes by Nicole Welch and Timothy Miller
+Allen of Hestia's Creations, written before any of this, that set out to prove that true AI recursive
 self-improvement requires both a rate of forgetting and outside input. The notebook is not in this
 repository. Where the text below mentions the notebook's notation (M_T, F_T) or the notebook's goal, it
 means those pages. Checks: `python3 checks/check_bounds.py` (all pass, 2026-10-19).

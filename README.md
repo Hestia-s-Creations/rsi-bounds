@@ -2,7 +2,7 @@
 
 What can be proved about how fast a self-improving AI gets better, and an experiment designed to test it.
 
-It started from three pages of handwritten notes by Nicole Welch and Tim of Hestia's Creations, which set out to
+It started from three pages of handwritten notes by Nicole Welch and Timothy Miller Allen of Hestia's Creations, which set out to
 prove that true AI recursive self-improvement requires both a rate of forgetting and outside input. The theorems
 below are what survived when that claim was made precise. `THEOREM.md` keeps score against the notes.
 
