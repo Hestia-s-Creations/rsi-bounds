@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Hestia's Creations
 """Exact numerical checks of the theorems in THEOREM.md on small random systems.
 
 Every quantity is computed exactly from full joint distributions (no sampling),
